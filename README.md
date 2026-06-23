@@ -1,5 +1,7 @@
 # minitui
 
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.kylc/minitui.svg)](https://clojars.org/io.github.kylc/minitui)
+
 Create terminal user interfaces in jank
 
 ## Requirements
