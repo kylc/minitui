@@ -1,0 +1,35 @@
+(ns minitui.screen
+  (:refer-clojure :exclude [print])
+  (:require [minitui.util :refer [unbox-el]])
+  (:include "ftxui/screen/screen.hpp"))
+
+(defn fit [el]
+  (let [d (cpp/ftxui.Dimension.Fit (unbox-el el))]
+    (cpp/box (cpp/new cpp/ftxui.Dimensions d))))
+
+(defn fixed [x]
+  (let [d (cpp/ftxui.Dimension.Fixed (cpp/int x))]
+    (cpp/box (cpp/new cpp/ftxui.Dimensions d))))
+
+(defn full []
+  (let [d (cpp/ftxui.Dimension.Full)]
+    (cpp/box (cpp/new cpp/ftxui.Dimensions d))))
+
+(defn create [w h]
+  (let [screen (cpp/ftxui.Screen.Create
+                (cpp/* (cpp/unbox (:* cpp/ftxui.Dimensions) w))
+                (cpp/* (cpp/unbox (:* cpp/ftxui.Dimensions) h)))]
+    (cpp/box (cpp/new cpp/ftxui.Screen screen))))
+
+(defn render [screen* el*]
+  (let [screen (cpp/* (cpp/unbox (:* cpp/ftxui.Screen) screen*))
+        el     (unbox-el el*)]
+    (cpp/ftxui.Render screen el)))
+
+(defn print [screen*]
+  (let [screen (cpp/unbox (:* cpp/ftxui.Screen) screen*)]
+    (.Print screen)))
+
+(defn reset-position [screen*]
+  (let [screen (cpp/unbox (:* cpp/ftxui.Screen) screen*)]
+    (.ResetPosition screen)))

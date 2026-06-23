@@ -1,0 +1,69 @@
+(ns demo
+  (:require [clojure.string]
+            [minitui.dom :as d]
+            [minitui.screen :as s]
+            [minitui.color :refer [palette16]])
+  (:include "chrono" "thread"))
+
+(def update-rate 10)
+
+(def cool-jank
+  ["   _             _    "
+   "  (_)           | |   "
+   "   _  __ _ _ __ | | __ "
+   "  | |/ _` | '_ \\| |/ / "
+   "  | | (_| | | | |   <  "
+   "  | |\\__,_|_| |_|_|\\_\\ "
+   " _/ |                  "
+   " |__/ "])
+
+(defn now []
+  (let [now   (cpp/std.chrono.system_clock.now)
+        since (.time_since_epoch now)]
+    (-> since
+        (#cpp (cpp/std.chrono.duration cpp/double))
+        (.count))))
+
+(defn logo []
+  (d/color (palette16 :red-light)
+            (d/border (d/center (d/blink (apply d/vbox (map d/text cool-jank)))))))
+
+(defn f [w h]
+  (for [x    (range w)
+        :let [x' (/ (double x) (double w))
+              m h]]
+    (* m x')))
+
+(defn render [progress]
+  (d/vbox
+   (logo)
+   (d/flexbox {:direction       :row
+               :justify-content :stretch}
+              (->> (d/border (d/text "jank")) (d/color (palette16 :blue)))
+              (->> (d/border (d/hcenter (d/text "is")))
+                   (d/color (palette16 :black))
+                   (d/bgcolor (palette16 :yellow)))
+              (->> (d/border (d/align-right (d/text "c++"))) (d/color (palette16 :magenta))))
+   (d/window
+    (d/text "jank stocks vs. time")
+    (->> (d/graph f) (d/color (palette16 :green))))
+   (d/window
+    (d/text "is jank TUI yet?")
+    (d/vbox
+     (d/center (d/text "jank TUIs are open for business!"))
+     (d/separator)
+     (d/gauge progress)))))
+
+(defn -main []
+  (let [init   (render 0.0)
+        screen (s/create (s/fixed 50)
+                         (s/fit init))]
+    ;; Typical render-print-clear loop as per upstream FTXUI examples.
+    (while true
+      (let [reset-pos (atom nil)
+            progress  (mod (* 0.1 (now)) 1.0)]
+        (s/render screen (render progress))
+        (s/print screen)
+        (reset! reset-pos (s/reset-position screen))
+        (sleep (/ 1000.0 update-rate))
+        (some-> @reset-pos print)))))

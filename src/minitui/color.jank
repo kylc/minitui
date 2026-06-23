@@ -1,0 +1,24 @@
+(ns minitui.color
+  (:include "ftxui/screen/color.hpp"))
+
+(defn- p16 [c]
+  (let [c16 (cpp/cast cpp/ftxui.Color.Palette16 c)]
+    (cpp/box (cpp/new cpp/ftxui.Color c16))))
+
+(def palette16
+  {:black         (p16 cpp/ftxui.Color.Palette16.Black)
+   :red           (p16 cpp/ftxui.Color.Palette16.Red)
+   :green         (p16 cpp/ftxui.Color.Palette16.Green)
+   :yellow        (p16 cpp/ftxui.Color.Palette16.Yellow)
+   :blue          (p16 cpp/ftxui.Color.Palette16.Blue)
+   :magenta       (p16 cpp/ftxui.Color.Palette16.Magenta)
+   :cyan          (p16 cpp/ftxui.Color.Palette16.Cyan)
+   :gray-light    (p16 cpp/ftxui.Color.Palette16.GrayLight)
+   :gray-dark     (p16 cpp/ftxui.Color.Palette16.GrayDark)
+   :red-light     (p16 cpp/ftxui.Color.Palette16.RedLight)
+   :green-light   (p16 cpp/ftxui.Color.Palette16.GreenLight)
+   :yellow-light  (p16 cpp/ftxui.Color.Palette16.YellowLight)
+   :blue-light    (p16 cpp/ftxui.Color.Palette16.BlueLight)
+   :magenta-light (p16 cpp/ftxui.Color.Palette16.MagentaLight)
+   :cyan-light    (p16 cpp/ftxui.Color.Palette16.CyanLight)
+   :white         (p16 cpp/ftxui.Color.Palette16.White)})

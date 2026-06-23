@@ -1,0 +1,8 @@
+(ns minitui.util
+  (:include "ftxui/dom/elements.hpp"))
+
+(defmacro make-el [arg]
+  `(cpp/box (cpp/new cpp/ftxui.Element ~arg)))
+
+(defmacro unbox-el [arg]
+  `(cpp/* (cpp/unbox (:* cpp/ftxui.Element) ~arg)))
