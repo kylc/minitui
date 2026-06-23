@@ -1,4 +1,4 @@
-(defproject io.github.kylc/minitui "0.1.0-SNAPSHOT"
+(defproject io.github.kylc/minitui "0.1.0"
   :description "Create terminal user interfaces in jank"
   :url "https://github.com/kylc/minitui"
   :license {:name "MPL 2.0"

@@ -14,7 +14,7 @@ Create terminal user interfaces in jank.
 Add the following dependency to your Leiningen project file:
 
 ``` clojure
-[io.github.kylc/minitui "0.1.0-SNAPSHOT"]
+[io.github.kylc/minitui "0.1.0"]
 ```
 
 ## Usage
