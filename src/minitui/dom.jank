@@ -1,6 +1,6 @@
 (ns minitui.dom
   (:refer-clojure :exclude [empty])
-  (:require [minitui.util :refer [make-el unbox-el]])
+  (:require [minitui.util :as util :refer [make-el unbox-el]])
   (:include "ftxui/dom/elements.hpp"))
 
 ;; Widgets
@@ -11,22 +11,39 @@
 (defn vtext [text]
   (make-el (cpp/ftxui.vtext text)))
 
-(defn separator []
-  (make-el (cpp/ftxui.separator)))
+(defn separator
+  ([] (make-el (cpp/ftxui.separator)))
+  ([style-or-char]
+   (if (keyword? style-or-char)
+     (make-el (cpp/ftxui.separatorStyled (util/border-style style-or-char)))
+     (make-el (cpp/ftxui.separatorCharacter style-or-char)))))
 
-(defn gauge [ratio]
-  (make-el (cpp/ftxui.gauge ratio)))
+(defn gauge
+  ([ratio] (make-el (cpp/ftxui.gauge ratio)))
+  ([ratio direction]
+   (make-el (cpp/ftxui.gaugeDirection ratio (util/direction direction)))))
 
-(defn border [el]
-  (make-el (cpp/ftxui.border (unbox-el el))))
+(defn border
+  ([el] (make-el (cpp/ftxui.border (unbox-el el))))
+  ([el style]
+   (make-el (cpp/| (unbox-el el) (cpp/ftxui.borderStyled (util/border-style style)))))
+  ([el style color]
+   (let [c (cpp/unbox (:* cpp/ftxui.Color) color)]
+     (make-el (cpp/| (unbox-el el) (cpp/ftxui.borderStyled (util/border-style style) (cpp/* c)))))))
 
 (defn window [title content]
   (make-el (cpp/ftxui.window (unbox-el title) (unbox-el content))))
 
 ;; TODO: spinner
 
-(defn paragraph [text]
-  (make-el (cpp/ftxui.paragraph text)))
+(defn paragraph
+  ([text] (make-el (cpp/ftxui.paragraph text)))
+  ([text align]
+   (case align
+     :left    (make-el (cpp/ftxui.paragraphAlignLeft text))
+     :right   (make-el (cpp/ftxui.paragraphAlignRight text))
+     :center  (make-el (cpp/ftxui.paragraphAlignCenter text))
+     :justify (make-el (cpp/ftxui.paragraphAlignJustify text)))))
 
 (cpp/raw "
 #include <jank/runtime/sequence_range.hpp>
@@ -37,9 +54,8 @@ wrap_graph(jank::runtime::object_ref f) {
   return [=](int width, int height) {
     auto out = f.call(jank::runtime::make_box(width),
                       jank::runtime::make_box(height));
-    auto seq = make_sequence_range(out);
     std::vector<int> output;
-    for (auto y : seq) {
+    for (auto y : make_sequence_range(out)) {
       output.push_back(y.to_integer());
     }
     return output;
@@ -86,18 +102,17 @@ wrap_graph(jank::runtime::object_ref f) {
 ;; TODO: Color constructors, palettes
 
 (defn color [color el]
-  (make-el (cpp/ftxui.color (cpp/ftxui.Color (cpp/* (cpp/unbox (:* cpp/ftxui.Color) color)))
-                            (unbox-el el))))
+  (let [c (cpp/ftxui.Color (cpp/* (cpp/unbox (:* cpp/ftxui.Color) color)))]
+    (make-el (cpp/ftxui.color c (unbox-el el)))))
 
 (defn bgcolor [color el]
-  (make-el (cpp/ftxui.bgcolor (cpp/ftxui.Color (cpp/* (cpp/unbox (:* cpp/ftxui.Color) color)))
-                              (unbox-el el))))
+  (let [c (cpp/ftxui.Color (cpp/* (cpp/unbox (:* cpp/ftxui.Color) color)))]
+    (make-el (cpp/ftxui.bgcolor c (unbox-el el)))))
 
 ;; TODO: gradients
 
 (defn hyperlink [link el]
-  (make-el (cpp/ftxui.hyperlink (cpp/cast cpp/std.string link)
-                                (unbox-el el))))
+  (make-el (cpp/ftxui.hyperlink link (unbox-el el))))
 
 ;; Layout
 
@@ -119,57 +134,8 @@ wrap_graph(jank::runtime::object_ref f) {
       (.push_back els' (unbox-el el)))
     (make-el (cpp/ftxui.dbox els'))))
 
-(defn- flex-config
-  [{:keys [direction wrap
-           justify-content align-items align-content
-           gap-x gap-y]}]
-  (let [config (cpp/new cpp/ftxui.FlexboxConfig)]
-    (when direction
-      (cpp/= (.-direction config)
-             (case direction
-               :row             cpp/ftxui.FlexboxConfig.Direction.Row
-               :row-inversed    cpp/ftxui.FlexboxConfig.Direction.RowInversed
-               :column          cpp/ftxui.FlexboxConfig.Direction.Column
-               :column-inversed cpp/ftxui.FlexboxConfig.Direction.ColumnInversed)))
-    (when wrap
-      (cpp/= (.-wrap config)
-             (case wrap
-               :no-wrap       cpp/ftxui.FlexboxConfig.Wrap.NoWrap
-               :wrap          cpp/ftxui.FlexboxConfig.Wrap.Wrap
-               :wrap-inversed cpp/ftxui.FlexboxConfig.Wrap.WrapInversed)))
-    (when justify-content
-      (cpp/= (.-justify_content config)
-             (case justify-content
-               :flex-start    cpp/ftxui.FlexboxConfig.JustifyContent.FlexStart
-               :flex-end      cpp/ftxui.FlexboxConfig.JustifyContent.FlexEnd
-               :center        cpp/ftxui.FlexboxConfig.JustifyContent.Center
-               :stretch       cpp/ftxui.FlexboxConfig.JustifyContent.Stretch
-               :space-between cpp/ftxui.FlexboxConfig.JustifyContent.SpaceBetween
-               :space-around  cpp/ftxui.FlexboxConfig.JustifyContent.SpaceAround
-               :space-evenly  cpp/ftxui.FlexboxConfig.JustifyContent.SpaceEvenly)))
-    (when align-items
-      (cpp/= (.-align_items config)
-             (case align-items
-               :flex-start cpp/ftxui.FlexboxConfig.AlignItems.FlexStart
-               :flex-end   cpp/ftxui.FlexboxConfig.AlignItems.FlexEnd
-               :center     cpp/ftxui.FlexboxConfig.AlignItems.Center
-               :stretch    cpp/ftxui.FlexboxConfig.AlignItems.Stretch)))
-    (when align-content
-      (cpp/= (.-align_content config)
-             (case align-content
-               :flex-start    cpp/ftxui.FlexboxConfig.AlignContent.FlexStart
-               :flex-end      cpp/ftxui.FlexboxConfig.AlignContent.FlexEnd
-               :center        cpp/ftxui.FlexboxConfig.AlignContent.Center
-               :stretch       cpp/ftxui.FlexboxConfig.AlignContent.Stretch
-               :space-between cpp/ftxui.FlexboxConfig.AlignContent.SpaceBetween
-               :space-around  cpp/ftxui.FlexboxConfig.AlignContent.SpaceAround
-               :space-evenly  cpp/ftxui.FlexboxConfig.AlignContent.SpaceEvenly)))
-    (when gap-x (cpp/= (.-gap_x config) gap-x))
-    (when gap-y (cpp/= (.-gap_y config) gap-y))
-    (cpp/box config)))
-
 (defn flexbox [config & els]
-  (let [config  (cpp/* (cpp/unbox (:* cpp/ftxui.FlexboxConfig) (flex-config config)))
+  (let [config  (cpp/* (cpp/unbox (:* cpp/ftxui.FlexboxConfig) (util/flexbox-config config)))
         els-vec (#cpp (cpp/std.vector cpp/ftxui.Element))]
     (doseq [el els]
       (.push_back els-vec (unbox-el el)))
@@ -186,9 +152,41 @@ wrap_graph(jank::runtime::object_ref f) {
 
 ;; Flexibility
 
-;; TODO
+(defn flex [el]
+  (make-el (cpp/ftxui.flex (unbox-el el))))
+
+(defn flex-grow [el]
+  (make-el (cpp/ftxui.flex_grow (unbox-el el))))
+
+(defn flex-shrink [el]
+  (make-el (cpp/ftxui.flex_shrink (unbox-el el))))
+
+(defn xflex [el]
+  (make-el (cpp/ftxui.xflex (unbox-el el))))
+
+(defn xflex-grow [el]
+  (make-el (cpp/ftxui.xflex_grow (unbox-el el))))
+
+(defn xflex-shrink [el]
+  (make-el (cpp/ftxui.xflex_shrink (unbox-el el))))
+
+(defn yflex [el]
+  (make-el (cpp/ftxui.yflex (unbox-el el))))
+
+(defn yflex-grow [el]
+  (make-el (cpp/ftxui.yflex_grow (unbox-el el))))
+
+(defn yflex-shrink [el]
+  (make-el (cpp/ftxui.yflex_shrink (unbox-el el))))
+
+(defn notflex [el]
+  (make-el (cpp/ftxui.notflex (unbox-el el))))
+
+(defn filler []
+  (make-el (cpp/ftxui.filler)))
 
 ;; Util
+
 (defn hcenter [el]
   (make-el (cpp/ftxui.hcenter (unbox-el el))))
 
@@ -203,4 +201,3 @@ wrap_graph(jank::runtime::object_ref f) {
 
 (defn nothing [el]
   (make-el (cpp/ftxui.nothing (unbox-el el))))
-

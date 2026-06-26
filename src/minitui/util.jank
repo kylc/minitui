@@ -1,8 +1,75 @@
 (ns minitui.util
-  (:include "ftxui/dom/elements.hpp"))
+  (:include "ftxui/dom/elements.hpp"
+            "ftxui/dom/direction.hpp"
+            "ftxui/dom/flexbox_config.hpp"))
 
 (defmacro make-el [arg]
   `(cpp/box (cpp/new cpp/ftxui.Element ~arg)))
 
 (defmacro unbox-el [arg]
   `(cpp/* (cpp/unbox (:* cpp/ftxui.Element) ~arg)))
+
+(defn border-style [style]
+  (case style
+    :light   cpp/ftxui.BorderStyle.LIGHT
+    :dashed  cpp/ftxui.BorderStyle.DASHED
+    :heavy   cpp/ftxui.BorderStyle.HEAVY
+    :double  cpp/ftxui.BorderStyle.DOUBLE
+    :rounded cpp/ftxui.BorderStyle.ROUNDED
+    :empty   cpp/ftxui.BorderStyle.EMPTY))
+
+(defn direction [dir]
+  (case dir
+    :up    cpp/ftxui.Direction.Up
+    :down  cpp/ftxui.Direction.Down
+    :left  cpp/ftxui.Direction.Left
+    :right cpp/ftxui.Direction.Right))
+
+(defn flexbox-config
+  [{:keys [direction wrap
+           justify-content align-items align-content
+           gap-x gap-y]}]
+  (let [config (cpp/new cpp/ftxui.FlexboxConfig)]
+    (when direction
+      (cpp/= (.-direction config)
+             (case direction
+               :row             cpp/ftxui.FlexboxConfig.Direction.Row
+               :row-inversed    cpp/ftxui.FlexboxConfig.Direction.RowInversed
+               :column          cpp/ftxui.FlexboxConfig.Direction.Column
+               :column-inversed cpp/ftxui.FlexboxConfig.Direction.ColumnInversed)))
+    (when wrap
+      (cpp/= (.-wrap config)
+             (case wrap
+               :no-wrap       cpp/ftxui.FlexboxConfig.Wrap.NoWrap
+               :wrap          cpp/ftxui.FlexboxConfig.Wrap.Wrap
+               :wrap-inversed cpp/ftxui.FlexboxConfig.Wrap.WrapInversed)))
+    (when justify-content
+      (cpp/= (.-justify_content config)
+             (case justify-content
+               :flex-start    cpp/ftxui.FlexboxConfig.JustifyContent.FlexStart
+               :flex-end      cpp/ftxui.FlexboxConfig.JustifyContent.FlexEnd
+               :center        cpp/ftxui.FlexboxConfig.JustifyContent.Center
+               :stretch       cpp/ftxui.FlexboxConfig.JustifyContent.Stretch
+               :space-between cpp/ftxui.FlexboxConfig.JustifyContent.SpaceBetween
+               :space-around  cpp/ftxui.FlexboxConfig.JustifyContent.SpaceAround
+               :space-evenly  cpp/ftxui.FlexboxConfig.JustifyContent.SpaceEvenly)))
+    (when align-items
+      (cpp/= (.-align_items config)
+             (case align-items
+               :flex-start cpp/ftxui.FlexboxConfig.AlignItems.FlexStart
+               :flex-end   cpp/ftxui.FlexboxConfig.AlignItems.FlexEnd
+               :center     cpp/ftxui.FlexboxConfig.AlignItems.Center
+               :stretch    cpp/ftxui.FlexboxConfig.AlignItems.Stretch)))
+    (when align-content
+      (cpp/= (.-align_content config)
+             (case align-content
+               :flex-start    cpp/ftxui.FlexboxConfig.AlignContent.FlexStart
+               :flex-end      cpp/ftxui.FlexboxConfig.AlignContent.FlexEnd
+               :center        cpp/ftxui.FlexboxConfig.AlignContent.Center
+               :stretch       cpp/ftxui.FlexboxConfig.AlignContent.Stretch
+               :space-between cpp/ftxui.FlexboxConfig.AlignContent.SpaceBetween
+               :space-around  cpp/ftxui.FlexboxConfig.AlignContent.SpaceAround
+               :space-evenly  cpp/ftxui.FlexboxConfig.AlignContent.SpaceEvenly)))
+    (some-> gap-x (cpp/= (.-gap_x config)))
+    (some-> gap-y (cpp/= (.-gap_y config)))
+    (cpp/box config)))

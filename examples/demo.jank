@@ -26,7 +26,7 @@
 
 (defn logo []
   (d/color (palette16 :red-light)
-            (d/border (d/center (d/blink (apply d/vbox (map d/text cool-jank)))))))
+           (d/border (d/center (d/bold (apply d/vbox (map d/text cool-jank)))))))
 
 (defn f [w h]
   (for [x    (range w)
