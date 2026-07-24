@@ -22,3 +22,23 @@
    :magenta-light (p16 cpp/ftxui.Color.Palette16.MagentaLight)
    :cyan-light    (p16 cpp/ftxui.Color.Palette16.CyanLight)
    :white         (p16 cpp/ftxui.Color.Palette16.White)})
+
+(defn rgb
+  "Create a color from red, green, and blue byte values in [0, 255]."
+  [r g b]
+  (cpp/box (cpp/new cpp/ftxui.Color (cpp/ftxui.Color.RGB r g b))))
+
+(defn rgba
+  "Create a color from red, green, blue, and alpha byte values in [0, 255]."
+  [r g b a]
+  (cpp/box (cpp/new cpp/ftxui.Color (cpp/ftxui.Color.RGBA r g b a))))
+
+(defn hsv
+  "Create a color from hue, saturation, and value byte values in [0, 255]."
+  [h s v]
+  (cpp/box (cpp/new cpp/ftxui.Color (cpp/ftxui.Color.HSV h s v))))
+
+(defn hsva
+  "Create a color from hue, saturation, value, and alpha byte values in [0, 255]."
+  [h s v a]
+  (cpp/box (cpp/new cpp/ftxui.Color (cpp/ftxui.Color.HSVA h s v a))))

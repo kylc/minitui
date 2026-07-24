@@ -27,8 +27,7 @@
   "Mutate the screen internal state by rendering the contents of the given
   element."
   [screen el]
-  (let [screen (cpp/* (cpp/unbox (:* cpp/ftxui.Screen) screen))
-        el     (unbox-el el)]
+  (let [screen (cpp/* (cpp/unbox (:* cpp/ftxui.Screen) screen))]
     (cpp/ftxui.Render screen el)))
 
 (defn print

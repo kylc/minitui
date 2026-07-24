@@ -1,8 +1,8 @@
-(ns demo
+(ns minitui.demo
   (:require [clojure.string]
             [minitui.dom :as d]
             [minitui.screen :as s]
-            [minitui.color :refer [palette16]])
+            [minitui.color :as c :refer [palette16]])
   (:include "chrono" "thread"))
 
 (def update-rate 10)
@@ -52,7 +52,15 @@
     (d/vbox
      (d/center (d/text "jank TUIs are open for business!"))
      (d/separator)
-     (d/gauge progress)))))
+     (d/color (c/hsv (int (* 255 progress)) 50 100)
+              (d/gauge progress))))
+   (d/window
+    (d/text "Flexbox example")
+    (d/flexbox
+     {:direction       :row
+      :justify-content :space-around}
+     (d/text "Left")
+     (d/text "Right")))))
 
 (defn -main []
   (let [init   (render 0.0)
